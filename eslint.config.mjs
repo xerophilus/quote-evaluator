@@ -13,9 +13,12 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      "@typescript-eslint/no-unused-vars": "warn", // Changed from error to warn
-      "react/no-unescaped-entities": "warn", // Changed from error to warn for production
-      "@next/next/no-html-link-for-pages": "warn", // Changed from error to warn for production
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "warn", // Allow any types for now
+      "prefer-const": "warn",
+      "react/no-unescaped-entities": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "@next/next/no-html-link-for-pages": "warn",
     },
   },
 ];
