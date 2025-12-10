@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -122,7 +123,9 @@ export default function RootLayout({
         <ErrorBoundary>
           <AnalyticsProvider>
             <HotjarProvider />
-            <EnhancedAnalytics />
+            <Suspense fallback={null}>
+              <EnhancedAnalytics />
+            </Suspense>
             <Header />
             {children}
           </AnalyticsProvider>
