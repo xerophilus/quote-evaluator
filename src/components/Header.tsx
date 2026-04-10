@@ -145,10 +145,16 @@ export default function Header() {
                 How it Works
               </Link>
               <Link
-                href="/#pricing" 
+                href="/#pricing"
                 className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200 hover:underline underline-offset-4"
               >
                 Pricing
+              </Link>
+              <Link
+                href="/guides"
+                className="text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200 hover:underline underline-offset-4"
+              >
+                Cost Guides
               </Link>
               
               {/* Dashboard Button */}
@@ -243,7 +249,14 @@ export default function Header() {
                   >
                     Pricing
                   </Link>
-                  
+                  <Link
+                    href="/guides"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
+                  >
+                    Cost Guides
+                  </Link>
+
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
