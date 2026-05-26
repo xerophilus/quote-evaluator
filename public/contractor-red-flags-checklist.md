@@ -218,4 +218,4 @@ Use QuoteEvaluator.com to analyze any quote and get expert insights on pricing, 
 
 *This checklist has helped thousands of homeowners avoid contractor scams and save money. Share it with friends and family to protect them too!*
 
-**© 2024 QuoteEvaluator.com - Your trusted partner in contractor quote analysis**
+**© 2025 QuoteEvaluator.com - Your trusted partner in contractor quote analysis**

@@ -27,7 +27,7 @@ interface ParsedFile {
 interface QuoteData {
   projectType: string;
   quoteText: string;
-  analysisType: "free" | "pro" | "subscription";
+  analysisType: "free" | "pro" | "subscription" | "lifetime";
   uploadedFile?: File;
   parsedFile?: ParsedFile;
 }
@@ -52,6 +52,7 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [hasSubscription, setHasSubscription] = useState(false);
+  const [hasLifetimeAccess, setHasLifetimeAccess] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [quoteData, setQuoteData] = useState<QuoteData>({
     projectType: "",
@@ -79,7 +80,7 @@ export default function Home() {
   const [freeUsageCount, setFreeUsageCount] = useState(0);
   const [hasUsedFreeQuote, setHasUsedFreeQuote] = useState(false);
   const [showEmailSignup, setShowEmailSignup] = useState(false);
-  const [pendingAnalysisType, setPendingAnalysisType] = useState<"free" | "pro" | "subscription" | null>(null);
+  const [pendingAnalysisType, setPendingAnalysisType] = useState<"free" | "pro" | "subscription" | "lifetime" | null>(null);
   
   // New revenue features state
   const [showUpsellModal, setShowUpsellModal] = useState(false);
@@ -108,8 +109,9 @@ export default function Home() {
     // Mark as hydrated to prevent hydration mismatches
     setIsHydrated(true);
     
-    // Set subscription state
+    // Set subscription and lifetime state
     setHasSubscription(!!localStorage.getItem('pro_subscription_email'));
+    setHasLifetimeAccess(localStorage.getItem('lifetime_access') === 'true');
     
     // Set first-time visitor state for conversion optimization
     const firstVisit = !localStorage.getItem('returning_user');
@@ -226,9 +228,14 @@ export default function Home() {
       }
     }
 
-    // Check for existing subscription and set analysis type
+    // Check for existing lifetime access or subscription and set analysis type
+    const lifetimeAccess = localStorage.getItem('lifetime_access') === 'true';
     const subscriberEmail = localStorage.getItem('pro_subscription_email');
-    if (subscriberEmail) {
+    if (lifetimeAccess) {
+      console.log('Found lifetime access');
+      setHasLifetimeAccess(true);
+      setQuoteData(prev => ({ ...prev, analysisType: 'lifetime' }));
+    } else if (subscriberEmail) {
       console.log('Found existing subscription:', subscriberEmail);
       setQuoteData(prev => ({ ...prev, analysisType: 'subscription' }));
     }
@@ -290,7 +297,8 @@ export default function Home() {
   // Check if user can use free analysis
   const canUseFreeAnalysis = () => {
     const hasSubscription = localStorage.getItem('pro_subscription_email');
-    return !hasUsedFreeQuote && !hasSubscription;
+    const lifetimeAccess = localStorage.getItem('lifetime_access') === 'true';
+    return !hasUsedFreeQuote && !hasSubscription && !lifetimeAccess;
   };
 
   // Get user email for saving quotes (Pro subscriber or free user with email)
@@ -755,11 +763,15 @@ export default function Home() {
     trackClick.cta('upgrade_to_pro', 'analysis_result');
     trackPayment.checkoutStart(paymentType, value);
 
-    // Check if user already has a subscription
+    // Check if user already has lifetime or subscription access
+    if (hasLifetimeAccess) {
+      setQuoteData(prev => ({ ...prev, analysisType: 'lifetime' }));
+      alert('You have Lifetime access! All features are unlocked.');
+      return;
+    }
     if (hasSubscription) {
-      // User has subscription - just unlock pro features
       setQuoteData(prev => ({ ...prev, analysisType: 'subscription' }));
-      alert('You already have a Pro subscription! All features are now unlocked.');
+      alert('You already have a Pro+ subscription! All features are now unlocked.');
       return;
     }
 
@@ -818,18 +830,24 @@ export default function Home() {
   };
 
   // New revenue feature handlers
-  const handleUpsellUpgrade = async (planType: 'proplus' | 'repeat') => {
+  const handleUpsellUpgrade = async (planType: 'proplus' | 'repeat' | 'lifetime') => {
     setIsProcessingPayment(true);
     try {
       const quoteId = currentQuoteId || `quote_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-      
+
+      const modeMap: Record<string, string> = {
+        proplus: 'subscription',
+        lifetime: 'payment',
+        repeat: 'payment',
+      };
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           productType: planType,
-          mode: planType === 'proplus' ? 'subscription' : 'payment',
-          quoteId 
+          mode: modeMap[planType] || 'payment',
+          quoteId
         }),
       });
 
@@ -856,7 +874,7 @@ export default function Home() {
   };
 
   const showUpsellAfterAnalysis = () => {
-    // Show upsell modal after analysis completion for free/pro users
+    // Show upsell modal after analysis completion for free/pro users (not lifetime/subscription)
     if (analysisResult && (quoteData.analysisType === 'free' || quoteData.analysisType === 'pro')) {
       const delay = 3;
       setTimeout(() => {
@@ -903,7 +921,7 @@ export default function Home() {
     }
   };
 
-  const handleAnalyze = async (analysisType: "free" | "pro" | "subscription") => {
+  const handleAnalyze = async (analysisType: "free" | "pro" | "subscription" | "lifetime") => {
     // Track analysis request
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'analysis_requested', {
@@ -1030,7 +1048,7 @@ export default function Home() {
               className="flex items-center space-x-2"
             >
               <Users className="h-4 w-4 text-blue-500" />
-              <span>10,000+ Quotes Analyzed</span>
+              <span>1,000+ Quotes Analyzed</span>
             </motion.div>
           </motion.div>
 
@@ -1062,7 +1080,7 @@ export default function Home() {
                 <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               ))}
             </div>
-              <span><strong>4.9/5</strong> from 2,847 reviews</span>
+              <span><strong>4.9/5</strong> from 500+ reviews</span>
             </div>
             <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
               <TrendingUp className="h-4 w-4 text-green-500" />
@@ -2208,7 +2226,7 @@ export default function Home() {
         {/* Social Proof & Testimonials Section */}
         <div className="mb-20">
           <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
-            Join 10,000+ Homeowners Who Stopped Overpaying
+            Join Thousands of Homeowners Who Stopped Overpaying
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
@@ -2405,11 +2423,11 @@ export default function Home() {
         <div className="mb-20 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">10,247</div>
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">1,000+</div>
               <div className="text-gray-600 dark:text-gray-300">Quotes Analyzed</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">$3.2M</div>
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">$200K+</div>
               <div className="text-gray-600 dark:text-gray-300">Total Savings Identified</div>
             </div>
             <div>
@@ -2480,7 +2498,7 @@ export default function Home() {
                 </button>
               </form>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-                No spam. Unsubscribe anytime. 10,000+ homeowners trust us.
+                No spam. Unsubscribe anytime. Thousands of homeowners trust us.
               </p>
             </div>
           </div>
@@ -2491,11 +2509,12 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-4">
             Simple, Transparent Pricing
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Free */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Free</h3>
               <p className="text-3xl font-bold text-blue-600 mb-4">$0</p>
-              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-6">
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-6 text-left">
                 <li>✓ Complete Plain English breakdown</li>
                 <li>✓ Line-by-line explanations</li>
                 <li>✓ Cost breakdown analysis</li>
@@ -2508,20 +2527,18 @@ export default function Home() {
                 Analyze Quote Free
               </button>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border-2 border-blue-500 shadow-lg text-center transform scale-105">
+
+            {/* Pro */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pro</h3>
               <p className="text-3xl font-bold text-blue-600 mb-4">$4.99</p>
               <p className="text-sm text-gray-500 mb-4">per quote</p>
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 mb-4">
-                <p className="text-sm text-green-800 dark:text-green-200 font-semibold">
-                  Avg savings identified: $2,400+
-                </p>
-              </div>
-              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-6">
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-6 text-left">
                 <li>✓ Everything in Free</li>
                 <li>✓ Cost comparisons</li>
                 <li>✓ Red flag detection</li>
-                <li>✓ Smart questions</li>
+                <li>✓ Smart questions to ask</li>
+                <li>✓ Quote health score</li>
               </ul>
               <button
                 onClick={scrollToForm}
@@ -2530,24 +2547,51 @@ export default function Home() {
                 Choose Pro
               </button>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pro+</h3>
-              <p className="text-3xl font-bold text-blue-600 mb-4">$9.99</p>
-              <p className="text-sm text-gray-500 mb-4">per month</p>
-              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-6">
-                <li>✓ Unlimited quotes</li>
+
+            {/* Lifetime - Best Value */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border-2 border-green-500 shadow-lg text-center relative transform md:scale-105">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                  Best Value
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 mt-2">Lifetime</h3>
+              <p className="text-3xl font-bold text-green-600 mb-4">$29.99</p>
+              <p className="text-sm text-gray-500 mb-4">one-time payment</p>
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-6 text-left">
+                <li>✓ Everything in Pro</li>
+                <li>✓ Unlimited quotes forever</li>
                 <li>✓ Quote comparisons</li>
-                <li>✓ Downloadable reports</li>
-                <li>✓ Priority support</li>
+                <li>✓ Downloadable PDF reports</li>
+                <li>✓ No monthly fees</li>
               </ul>
               <button
-                onClick={() => {
-                  // TODO: Implement waitlist modal
-                  alert('Pro+ waitlist coming soon! Enter your email to get notified.');
-                }}
-                className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                onClick={() => handleUpsellUpgrade('lifetime')}
+                disabled={isProcessingPayment}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
               >
-                Get Notified
+                {isProcessingPayment ? 'Processing...' : 'Get Lifetime Access'}
+              </button>
+            </div>
+
+            {/* Pro+ */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pro+</h3>
+              <p className="text-3xl font-bold text-purple-600 mb-4">$9.99</p>
+              <p className="text-sm text-gray-500 mb-4">per month</p>
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-6 text-left">
+                <li>✓ Everything in Pro</li>
+                <li>✓ Unlimited quotes/month</li>
+                <li>✓ Side-by-side comparisons</li>
+                <li>✓ Downloadable PDF reports</li>
+                <li>✓ Priority processing</li>
+              </ul>
+              <button
+                onClick={() => handleUpsellUpgrade('proplus')}
+                disabled={isProcessingPayment}
+                className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+              >
+                {isProcessingPayment ? 'Processing...' : 'Subscribe to Pro+'}
               </button>
             </div>
           </div>
@@ -2592,7 +2636,16 @@ export default function Home() {
                 What&apos;s the difference between Free and Pro analysis?
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Free analysis gives you a plain English breakdown and basic insights. Pro analysis ($4.99) includes cost comparisons, red flag detection, market rate analysis, and specific negotiation questions. Pro users save an average of $2,400+ per project.
+                Free analysis gives you a plain English breakdown and basic insights. Pro analysis ($4.99/quote) adds cost comparisons, red flag detection, market rate analysis, and specific negotiation questions. For unlimited access, choose Lifetime ($29.99 one-time) or Pro+ ($9.99/month).
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                What&apos;s the difference between Lifetime and Pro+?
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Lifetime is a one-time purchase ($29.99) with unlimited analyses forever — no recurring charges. Pro+ is a monthly subscription ($9.99/month) that also includes priority support. Lifetime is best for homeowners, while Pro+ is ideal for real estate professionals and contractors who need ongoing priority support.
               </p>
             </div>
 
@@ -2610,7 +2663,7 @@ export default function Home() {
                 Can I use this for multiple quotes?
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Free users get 1 analysis per visit. Pro analysis is $4.99 per quote with unlimited access. Pro+ subscribers ($9.99/month) get unlimited quotes, comparisons, and downloadable reports - perfect for multiple projects.
+                Free users get 1 analysis per visit. Pro analysis is $4.99 per quote. Lifetime access ($29.99 one-time) gives you unlimited quotes forever. Pro+ subscribers ($9.99/month) get unlimited quotes with priority processing — perfect for professionals managing multiple projects.
               </p>
             </div>
           </div>
@@ -2620,7 +2673,7 @@ export default function Home() {
         <div className="mb-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Don&apos;t Let Contractors Overcharge You</h2>
           <p className="text-xl mb-6 opacity-90">
-            Join 10,000+ homeowners who use QuoteEvaluator.com to save thousands
+            Join thousands of homeowners who use QuoteEvaluator.com to save money
           </p>
           <div className="flex items-center justify-center space-x-4 mb-6">
             <div className="flex items-center space-x-1">
@@ -2628,7 +2681,7 @@ export default function Home() {
                 <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
               ))}
             </div>
-            <span className="text-lg font-semibold">4.9/5 from 2,847 reviews</span>
+            <span className="text-lg font-semibold">4.9/5 from 500+ reviews</span>
           </div>
           <button
             onClick={scrollToForm}
@@ -2645,7 +2698,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-300">
-              © 2024 QuoteEvaluator.com. AI-powered contractor quote analysis.
+              © 2025 QuoteEvaluator.com. AI-powered contractor quote analysis.
             </p>
           </div>
         </div>

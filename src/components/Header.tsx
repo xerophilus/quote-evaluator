@@ -26,6 +26,7 @@ export default function Header() {
     hasActiveSubscription: false,
     email: '',
   });
+  const [hasLifetimeAccess, setHasLifetimeAccess] = useState(false);
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [emailInput, setEmailInput] = useState('');
@@ -34,8 +35,20 @@ export default function Header() {
   useEffect(() => {
     const checkSubscription = () => {
       try {
+        // Check for lifetime access
+        const lifetimeAccess = localStorage.getItem('lifetime_access') === 'true';
+        const lifetimeEmail = localStorage.getItem('lifetime_email');
+        if (lifetimeAccess && lifetimeEmail) {
+          setHasLifetimeAccess(true);
+          setSubscriptionStatus({
+            hasActiveSubscription: true,
+            email: lifetimeEmail,
+          });
+          return;
+        }
+
         const subscriberEmail = localStorage.getItem('pro_subscription_email');
-        
+
         if (subscriberEmail) {
           setSubscriptionStatus({
             hasActiveSubscription: true, // We'll verify this via API
@@ -80,6 +93,9 @@ export default function Header() {
 
   const clearSubscription = () => {
     localStorage.removeItem('pro_subscription_email');
+    localStorage.removeItem('lifetime_access');
+    localStorage.removeItem('lifetime_email');
+    setHasLifetimeAccess(false);
     setSubscriptionStatus({
       hasActiveSubscription: false,
       email: '',
@@ -186,7 +202,7 @@ export default function Header() {
                   <Crown className="h-5 w-5 text-yellow-600" />
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-yellow-800 dark:text-yellow-200">
-                      Pro Subscriber
+                      {hasLifetimeAccess ? 'Lifetime Member' : 'Pro+ Subscriber'}
                     </span>
                     <span className="text-xs text-yellow-600 dark:text-yellow-300">
                       {subscriptionStatus.email}

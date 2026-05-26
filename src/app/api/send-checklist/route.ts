@@ -154,7 +154,7 @@ function getEmailTemplate(email: string): string {
                     <li><strong>$2.3M+</strong> saved by our users from contractor overcharges</li>
                     <li><strong>89%</strong> of users avoid hiring bad contractors</li>
                     <li><strong>Average savings:</strong> $3,200 per project</li>
-                    <li><strong>10,000+</strong> homeowners protected</li>
+                    <li><strong>Thousands</strong> of homeowners protected</li>
                 </ul>
             </div>
             
@@ -217,7 +217,7 @@ Thank you for signing up with QuoteEvaluator.com! Here's your FREE Contractor Re
 - $2.3M+ saved by our users from contractor overcharges
 - 89% of users avoid hiring bad contractors  
 - Average savings: $3,200 per project
-- 10,000+ homeowners protected
+- Thousands of homeowners protected
 
 🎯 What's Inside:
 - 23 Critical Red Flags to watch for

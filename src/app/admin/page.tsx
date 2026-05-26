@@ -1,135 +1,103 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+import { useState, useEffect, useCallback } from 'react';
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
-import { 
-  DollarSign, TrendingUp, FileText, 
-  Download, RefreshCw, Target
+import {
+  DollarSign,
+  TrendingUp,
+  FileText,
+  Download,
+  RefreshCw,
+  LogOut,
+  Users,
+  CreditCard,
+  ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
-import { exportExperimentData } from '@/lib/ab-testing';
+import { AdminLogin } from '@/components/admin/AdminLogin';
+import type { AdminMetrics, AdminTimeRange } from '@/lib/admin-metrics';
 
-interface DashboardMetrics {
-  revenue: {
-    today: number;
-    week: number;
-    month: number;
-    growth: number;
-  };
-  conversions: {
-    overall: number;
-    bySource: Array<{ source: string; rate: number; revenue: number }>;
-    funnel: Array<{ stage: string; users: number; rate: number }>;
-  };
-  quotes: {
-    total: number;
-    byType: Array<{ type: string; count: number; revenue: number }>;
-    avgValue: number;
-  };
-  experiments: {
-    active: number;
-    results: Array<{ name: string; variant: string; conversions: number; revenue: number }>;
-  };
-}
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function AdminDashboard() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
+  const [timeRange, setTimeRange] = useState<AdminTimeRange>('week');
   const [loading, setLoading] = useState(true);
+  const [authChecking, setAuthChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Simple auth check (in production, use proper authentication)
-  useEffect(() => {
-    const checkAuth = () => {
-      const adminKey = prompt('Enter admin key:');
-      if (adminKey === process.env.NEXT_PUBLIC_ADMIN_KEY || adminKey === 'admin123') {
+  const checkSession = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/session');
+      if (response.ok) {
+        const data = await response.json();
         setIsAuthorized(true);
-        loadMetrics();
-      } else {
-        alert('Unauthorized');
-        window.location.href = '/';
+        setAdminEmail(data.email);
+        return true;
       }
-    };
-    
-    checkAuth();
+      setIsAuthorized(false);
+      return false;
+    } catch {
+      setIsAuthorized(false);
+      return false;
+    } finally {
+      setAuthChecking(false);
+    }
   }, []);
 
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     setLoading(true);
-    
-    // In production, these would come from your analytics API
-    // For now, using mock data with localStorage analytics
-    const mockMetrics: DashboardMetrics = {
-      revenue: {
-        today: parseFloat(localStorage.getItem('revenue_today') || '0'),
-        week: parseFloat(localStorage.getItem('revenue_week') || '156.70'),
-        month: parseFloat(localStorage.getItem('revenue_month') || '1847.30'),
-        growth: 23.5
-      },
-      conversions: {
-        overall: 3.8,
-        bySource: [
-          { source: 'Google Ads', rate: 4.2, revenue: 847.30 },
-          { source: 'Organic', rate: 3.1, revenue: 423.50 },
-          { source: 'Facebook', rate: 2.8, revenue: 312.20 },
-          { source: 'Direct', rate: 5.1, revenue: 264.30 },
-        ],
-        funnel: [
-          { stage: 'Landing Page', users: 1000, rate: 100 },
-          { stage: 'Quote Upload', users: 342, rate: 34.2 },
-          { stage: 'Analysis View', users: 298, rate: 29.8 },
-          { stage: 'Checkout Started', users: 89, rate: 8.9 },
-          { stage: 'Payment Complete', users: 38, rate: 3.8 },
-        ]
-      },
-      quotes: {
-        total: parseInt(localStorage.getItem('total_quotes') || '342'),
-        byType: [
-          { type: 'Kitchen Remodel', count: 124, revenue: 619.76 },
-          { type: 'Bathroom', count: 89, revenue: 444.11 },
-          { type: 'Roofing', count: 67, revenue: 334.33 },
-          { type: 'Other', count: 62, revenue: 449.10 },
-        ],
-        avgValue: 4.99
-      },
-      experiments: {
-        active: 7,
-        results: [
-          { name: 'Pricing $7.99', variant: 'variant_a', conversions: 42, revenue: 335.58 },
-          { name: 'Pricing $4.99', variant: 'control', conversions: 38, revenue: 189.62 },
-          { name: 'Green Button', variant: 'variant_a', conversions: 31, revenue: 154.69 },
-          { name: 'Blue Button', variant: 'control', conversions: 28, revenue: 139.72 },
-        ]
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/metrics?range=${timeRange}`);
+      if (response.status === 401) {
+        setIsAuthorized(false);
+        return;
       }
-    };
-
-    // Simulate loading delay
-    setTimeout(() => {
-      setMetrics(mockMetrics);
+      if (!response.ok) {
+        throw new Error('Failed to load metrics');
+      }
+      const data = (await response.json()) as AdminMetrics;
+      setMetrics(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load metrics');
+    } finally {
       setLoading(false);
-    }, 1000);
-  };
+    }
+  }, [timeRange]);
 
-  const exportData = () => {
-    const experimentData = exportExperimentData();
-    const dataStr = JSON.stringify({ metrics, experiments: experimentData }, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `dashboard-export-${new Date().toISOString()}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
-  if (!isAuthorized) {
-    return <div className="flex items-center justify-center min-h-screen">Checking authorization...</div>;
+  useEffect(() => {
+    if (isAuthorized) {
+      loadMetrics();
+    }
+  }, [isAuthorized, loadMetrics]);
+
+  async function handleLogout() {
+    await fetch('/api/admin/session', { method: 'DELETE' });
+    setIsAuthorized(false);
+    setAdminEmail(null);
+    setMetrics(null);
   }
 
-  if (loading || !metrics) {
+  if (authChecking) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
@@ -137,256 +105,403 @@ export default function AdminDashboard() {
     );
   }
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  if (!isAuthorized) {
+    return (
+      <AdminLogin
+        onAuthenticated={(email) => {
+          setAdminEmail(email);
+          setIsAuthorized(true);
+        }}
+      />
+    );
+  }
+
+  if (loading && !metrics) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
+        <AlertCircle className="h-10 w-10 text-red-500" />
+        <p className="text-gray-600">{error || 'Unable to load dashboard'}</p>
+        <button
+          onClick={loadMetrics}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const revenueBySource = metrics.conversions.bySource.length > 0
+    ? metrics.conversions.bySource
+    : [{ source: 'No paid sessions yet', rate: 0, revenue: 0, count: 0 }];
+
+  const quoteTypes = metrics.quotes.byType.length > 0
+    ? metrics.quotes.byType
+    : [{ type: 'No quotes yet', count: 0, revenue: 0 }];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600">Real-time metrics and conversion tracking</p>
+            <p className="text-gray-600">
+              Live metrics · Signed in as {adminEmail}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Updated {new Date(metrics.generatedAt).toLocaleString()}
+            </p>
           </div>
-          
-          <div className="flex items-center space-x-4">
+
+          <div className="flex flex-wrap items-center gap-3">
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as any)}
-              className="px-4 py-2 border rounded-lg"
+              onChange={(e) => setTimeRange(e.target.value as AdminTimeRange)}
+              className="px-4 py-2 border rounded-lg bg-white"
             >
               <option value="today">Today</option>
               <option value="week">This Week</option>
               <option value="month">This Month</option>
             </select>
-            
+
             <button
               onClick={loadMetrics}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 disabled:opacity-50"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
-            
+
             <button
-              onClick={exportData}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
+              onClick={() => {
+                const dataStr = JSON.stringify(metrics, null, 2);
+                const dataUri =
+                  'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                const link = document.createElement('a');
+                link.href = dataUri;
+                link.download = `admin-export-${new Date().toISOString()}.json`;
+                link.click();
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2 bg-white"
             >
               <Download className="h-4 w-4" />
               <span>Export</span>
             </button>
+
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2 bg-white"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign out</span>
+            </button>
           </div>
         </div>
 
+        {/* Data source status */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          {[
+            { label: 'Stripe', active: metrics.dataSources.stripe },
+            { label: 'Firestore', active: metrics.dataSources.firestore },
+            { label: 'Mailchimp', active: metrics.dataSources.mailchimp },
+          ].map(({ label, active }) => (
+            <div
+              key={label}
+              className={`text-sm px-4 py-2 rounded-lg border ${
+                active
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+              }`}
+            >
+              {label}: {active ? 'Connected' : 'Not configured'}
+            </div>
+          ))}
+        </div>
+
+        {!metrics.dataSources.firestore && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+            Add <code className="bg-amber-100 px-1 rounded">FIREBASE_SERVICE_ACCOUNT_KEY</code> to
+            your environment to enable quote counts and activity from Firestore.
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Revenue Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <DollarSign className="h-8 w-8 text-green-600" />
-              <span className="text-sm text-green-600 font-semibold">
-                +{metrics.revenue.growth}%
+              <span
+                className={`text-sm font-semibold ${
+                  metrics.revenue.growth >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}
+              >
+                {metrics.revenue.growth >= 0 ? '+' : ''}
+                {metrics.revenue.growth.toFixed(1)}%
               </span>
             </div>
-            <h3 className="text-gray-600 text-sm">Today's Revenue</h3>
+            <h3 className="text-gray-600 text-sm">
+              {timeRange === 'today' ? "Today's Revenue" : 'Period Revenue'}
+            </h3>
             <p className="text-2xl font-bold text-gray-900">
-              ${metrics.revenue.today.toFixed(2)}
+              ${(timeRange === 'today' ? metrics.revenue.today : metrics.revenue.period).toFixed(2)}
             </p>
             <p className="text-xs text-gray-500 mt-2">
-              Goal: $150.00 ({((metrics.revenue.today / 150) * 100).toFixed(0)}%)
+              Today: ${metrics.revenue.today.toFixed(2)} · Goal: $150 (
+              {metrics.revenue.goalProgress.toFixed(0)}%)
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <TrendingUp className="h-8 w-8 text-blue-600" />
-              <span className="text-sm text-gray-600">3.8%</span>
+              <span className="text-sm text-gray-600">
+                {metrics.conversions.checkoutCompleted} paid
+              </span>
             </div>
-            <h3 className="text-gray-600 text-sm">Conversion Rate</h3>
+            <h3 className="text-gray-600 text-sm">Checkout Conversion</h3>
             <p className="text-2xl font-bold text-gray-900">
-              {metrics.conversions.overall}%
+              {metrics.conversions.overall.toFixed(1)}%
             </p>
             <p className="text-xs text-gray-500 mt-2">
-              38 conversions today
+              {metrics.conversions.checkoutStarted} started · MRR: $
+              {metrics.revenue.mrr.toFixed(2)}
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <FileText className="h-8 w-8 text-purple-600" />
-              <span className="text-sm text-gray-600">+12</span>
+              <span className="text-sm text-gray-600">+{metrics.quotes.period}</span>
             </div>
             <h3 className="text-gray-600 text-sm">Quotes Analyzed</h3>
-            <p className="text-2xl font-bold text-gray-900">
-              {metrics.quotes.total}
-            </p>
+            <p className="text-2xl font-bold text-gray-900">{metrics.quotes.total}</p>
             <p className="text-xs text-gray-500 mt-2">
-              Avg value: ${metrics.quotes.avgValue}
+              {metrics.quotes.period} in selected period
             </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <Target className="h-8 w-8 text-orange-600" />
-              <span className="text-sm text-gray-600">{metrics.experiments.active}</span>
+              <Users className="h-8 w-8 text-orange-600" />
+              <span className="text-sm text-gray-600">{metrics.subscriptions.active} active</span>
             </div>
-            <h3 className="text-gray-600 text-sm">Active A/B Tests</h3>
-            <p className="text-2xl font-bold text-gray-900">
-              {metrics.experiments.active}
-            </p>
+            <h3 className="text-gray-600 text-sm">Email Subscribers</h3>
+            <p className="text-2xl font-bold text-gray-900">{metrics.emailSignups.total}</p>
             <p className="text-xs text-gray-500 mt-2">
-              2 showing winners
+              {metrics.subscriptions.active} subscriptions · {metrics.stripeSummary.totalCustomers}{' '}
+              Stripe customers
             </p>
           </div>
         </div>
 
-        {/* Charts Row 1 */}
+        {/* Secondary stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Week Revenue', value: `$${metrics.revenue.week.toFixed(2)}` },
+            { label: 'Month Revenue', value: `$${metrics.revenue.month.toFixed(2)}` },
+            { label: 'Stripe Charges (30d)', value: metrics.stripeSummary.totalCharges },
+            { label: 'Canceled Subs', value: metrics.subscriptions.canceled },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white rounded-lg shadow-sm p-4">
+              <p className="text-xs text-gray-500">{stat.label}</p>
+              <p className="text-lg font-semibold text-gray-900">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Conversion Funnel */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Conversion Funnel</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={metrics.conversions.funnel}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="stage" angle={-45} textAnchor="end" height={80} />
+                <XAxis dataKey="stage" angle={-25} textAnchor="end" height={80} fontSize={11} />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="users" fill="#3B82F6" />
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-4 space-y-2">
-              {metrics.conversions.funnel.map((stage, idx) => (
-                <div key={idx} className="flex justify-between text-sm">
-                  <span className="text-gray-600">{stage.stage}</span>
-                  <span className="font-semibold">{stage.rate}%</span>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* Revenue by Source */}
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Traffic Source</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={metrics.conversions.bySource}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="revenue"
-                >
-                  {metrics.conversions.bySource.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="mt-4 space-y-2">
-              {metrics.conversions.bySource.map((source, idx) => (
-                <div key={idx} className="flex justify-between text-sm">
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: COLORS[idx % COLORS.length] }}
-                    />
-                    <span className="text-gray-600">{source.source}</span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-gray-500">{source.rate}% CVR</span>
-                    <span className="font-semibold">${source.revenue.toFixed(2)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Source</h3>
+            {metrics.conversions.bySource.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={revenueBySource}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ source, percent }) =>
+                      `${source} ${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
+                    outerRadius={80}
+                    dataKey="revenue"
+                  >
+                    {revenueBySource.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-gray-500 text-sm">
+                No checkout revenue in this period yet
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Charts Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Quote Types */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Popular Quote Types</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={metrics.quotes.byType}>
+              <BarChart data={quoteTypes.slice(0, 8)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="type" />
+                <XAxis dataKey="type" fontSize={11} />
                 <YAxis />
                 <Tooltip />
-                <Legend />
                 <Bar dataKey="count" fill="#10B981" name="Quotes" />
-                <Bar dataKey="revenue" fill="#F59E0B" name="Revenue ($)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* A/B Test Results */}
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">A/B Test Performance</h3>
-            <div className="space-y-4">
-              {metrics.experiments.results.map((exp, idx) => (
-                <div key={idx} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{exp.name}</h4>
-                      <p className="text-sm text-gray-600">Variant: {exp.variant}</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      exp.variant === 'control' 
-                        ? 'bg-gray-100 text-gray-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {exp.variant === 'control' ? 'Control' : 'Test'}
-                    </span>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Analysis Types</h3>
+            <div className="space-y-3">
+              {metrics.quotes.byAnalysisType.length > 0 ? (
+                metrics.quotes.byAnalysisType.map((item) => (
+                  <div key={item.type} className="flex justify-between items-center border rounded-lg p-3">
+                    <span className="font-medium capitalize text-gray-900">{item.type}</span>
+                    <span className="text-gray-600">{item.count} quotes</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Conversions: {exp.conversions}</span>
-                    <span className="font-semibold">${exp.revenue.toFixed(2)}</span>
-                  </div>
-                  <div className="mt-2 bg-gray-100 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{ width: `${(exp.conversions / 50) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No quote data available</p>
+              )}
+            </div>
+
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">External Analytics</h4>
+              <div className="space-y-2">
+                <a
+                  href="https://analytics.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-sm text-blue-600 hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Google Analytics (funnel & A/B tests)
+                </a>
+                <a
+                  href="https://dashboard.stripe.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-sm text-blue-600 hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Stripe Dashboard
+                </a>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">{metrics.experiments.note}</p>
             </div>
           </div>
         </div>
 
-        {/* Real-time Activity Feed */}
+        {/* Recent Stripe Payments */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <CreditCard className="h-5 w-5 mr-2" />
+              Recent Stripe Payments
+            </h3>
+          </div>
+          {metrics.stripeSummary.recentPayments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-gray-500">
+                    <th className="pb-2 pr-4">Date</th>
+                    <th className="pb-2 pr-4">Email</th>
+                    <th className="pb-2 pr-4">Product</th>
+                    <th className="pb-2">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics.stripeSummary.recentPayments.map((payment) => (
+                    <tr key={payment.id} className="border-b last:border-0">
+                      <td className="py-2 pr-4 text-gray-600">
+                        {new Date(payment.created).toLocaleDateString()}
+                      </td>
+                      <td className="py-2 pr-4">{payment.email || '—'}</td>
+                      <td className="py-2 pr-4 capitalize">
+                        {payment.productType.replace(/_/g, ' ')}
+                      </td>
+                      <td className="py-2 font-semibold">${payment.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No recent payments found</p>
+          )}
+        </div>
+
+        {/* Activity Feed */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            {[
-              { time: '2 min ago', action: 'Quote uploaded', type: 'Kitchen Remodel', source: 'Google Ads' },
-              { time: '5 min ago', action: 'Payment completed', amount: '$4.99', source: 'Organic' },
-              { time: '12 min ago', action: 'Email signup', source: 'Facebook' },
-              { time: '18 min ago', action: 'Quote analyzed', type: 'Bathroom', status: 'Free' },
-              { time: '23 min ago', action: 'Payment completed', amount: '$9.99', source: 'Direct' },
-            ].map((activity, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 border-b last:border-0">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.action.includes('Payment') ? 'bg-green-500' :
-                    activity.action.includes('Quote') ? 'bg-blue-500' :
-                    'bg-gray-500'
-                  }`} />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-xs text-gray-500">
-                      {activity.type || activity.amount} • {activity.source}
-                    </p>
+          {metrics.recentActivity.length > 0 ? (
+            <div className="space-y-3">
+              {metrics.recentActivity.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center justify-between py-2 border-b last:border-0"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        activity.action.includes('Payment')
+                          ? 'bg-green-500'
+                          : activity.action.includes('Quote')
+                            ? 'bg-blue-500'
+                            : 'bg-purple-500'
+                      }`}
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                      <p className="text-xs text-gray-500">
+                        {[activity.detail, activity.amount, activity.source]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    </div>
                   </div>
+                  <span className="text-xs text-gray-500">{activity.time}</span>
                 </div>
-                <span className="text-xs text-gray-500">{activity.time}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No recent activity yet</p>
+          )}
         </div>
       </div>
     </div>

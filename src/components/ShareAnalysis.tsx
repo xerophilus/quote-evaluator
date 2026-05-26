@@ -7,7 +7,7 @@ import { trackFeature, trackClick } from '@/lib/analytics';
 
 interface ShareAnalysisProps {
   quoteId: string;
-  analysisType: 'free' | 'pro' | 'subscription';
+  analysisType: 'free' | 'pro' | 'subscription' | 'lifetime';
   projectType?: string;
   savings?: string;
 }

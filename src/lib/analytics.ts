@@ -102,7 +102,7 @@ export const trackPayment = {
     });
   },
   
-  checkoutComplete: (type: 'single' | 'subscription', value: number, sessionId: string) => {
+  checkoutComplete: (type: 'single' | 'subscription' | 'lifetime', value: number, sessionId: string) => {
     trackEvent('purchase', 'Payment', type, value, {
       transaction_id: sessionId,
       currency: 'USD',

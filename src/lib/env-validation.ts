@@ -1,7 +1,7 @@
 // Environment variable validation
 export function validateEnv() {
   const required = [
-    'OPENAI_API_KEY',
+    'ANTHROPIC_API_KEY',
     'STRIPE_SECRET_KEY',
     'STRIPE_PUBLISHABLE_KEY',
     'NEXT_PUBLIC_FIREBASE_API_KEY',
@@ -29,8 +29,8 @@ export function validateEnv() {
   }
   
   // Validate format of certain env vars
-  if (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.startsWith('sk-')) {
-    console.warn('⚠️  OpenAI API key format looks incorrect (should start with "sk-")');
+  if (process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_API_KEY.startsWith('sk-ant-')) {
+    console.warn('⚠️  Anthropic API key format looks incorrect (should start with "sk-ant-")');
   }
   
   if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.startsWith('sk_')) {
@@ -46,6 +46,10 @@ export function validateEnv() {
     // Ensure INTERNAL_API_KEY is set for production
     if (!process.env.INTERNAL_API_KEY) {
       console.warn('⚠️  INTERNAL_API_KEY not set - API endpoints may be unprotected');
+    }
+
+    if (!process.env.ADMIN_SESSION_SECRET) {
+      console.warn('⚠️  ADMIN_SESSION_SECRET not set - using fallback (set for production admin auth)');
     }
   }
   

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Optimized for Vercel deployment
-  serverExternalPackages: ['pdf-parse'],
+  serverExternalPackages: ['pdf-parse', 'firebase-admin'],
   experimental: {
     // Enable Web Vitals attribution for better debugging
     webVitalsAttribution: ['CLS', 'LCP']

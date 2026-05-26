@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { verifyPaymentSchema } from '@/lib/validation';
 import { z } from 'zod';
+import { logAnalyticsEvent } from '@/lib/analytics-events';
 
 export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -46,10 +47,23 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    if (session.payment_status === 'paid') {
+      await logAnalyticsEvent({
+        type: 'payment_complete',
+        email: session.customer_details?.email ?? undefined,
+        metadata: {
+          product_type: session.metadata?.product_type || 'unknown',
+          amount: (session.amount_total || 0) / 100,
+          session_id: session.id,
+        },
+      });
+    }
+
     return NextResponse.json({
       paymentStatus: session.payment_status,
       customerEmail: session.customer_details?.email,
       quoteId: session.metadata?.quote_id,
+      productType: session.metadata?.product_type,
       isSubscription,
       subscriptionInfo,
       customerId: session.customer,

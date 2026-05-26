@@ -8,8 +8,8 @@ import { trackPayment, trackClick, trackRevenue } from '@/lib/analytics';
 interface UpsellModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpgrade: (planType: 'proplus' | 'repeat') => void;
-  analysisType: 'free' | 'pro' | 'subscription';
+  onUpgrade: (planType: 'proplus' | 'repeat' | 'lifetime') => void;
+  analysisType: 'free' | 'pro' | 'subscription' | 'lifetime';
   currentQuoteId?: string;
 }
 
@@ -23,7 +23,7 @@ export default function UpsellModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [modalStartTime] = useState(Date.now());
 
-  const handleUpgrade = async (planType: 'proplus' | 'repeat') => {
+  const handleUpgrade = async (planType: 'proplus' | 'repeat' | 'lifetime') => {
     setIsProcessing(true);
     
     // Track upsell click
@@ -47,8 +47,8 @@ export default function UpsellModal({
     onClose();
   };
 
-  // Don't show upsell to existing Pro+ subscribers
-  if (analysisType === 'subscription') {
+  // Don't show upsell to existing Pro+ subscribers or Lifetime users
+  if (analysisType === 'subscription' || analysisType === 'lifetime') {
     return null;
   }
 
@@ -215,7 +215,7 @@ export default function UpsellModal({
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Join 10,000+ homeowners who've saved money with our analysis
+                    Join thousands of homeowners who&apos;ve saved money with our analysis
                   </p>
                 </div>
               </div>

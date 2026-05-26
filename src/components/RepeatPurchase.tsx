@@ -7,7 +7,7 @@ import { trackClick, trackPayment } from '@/lib/analytics';
 
 interface RepeatPurchaseProps {
   onPurchase: () => void;
-  analysisType: 'free' | 'pro' | 'subscription';
+  analysisType: 'free' | 'pro' | 'subscription' | 'lifetime';
   hasUsedFreeQuote: boolean;
   className?: string;
 }

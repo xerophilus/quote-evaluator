@@ -13,6 +13,7 @@ function SuccessPageContent() {
   const quoteId = searchParams.get('quote_id');
   const [paymentStatus, setPaymentStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [isSubscription, setIsSubscription] = useState(false);
+  const [isLifetime, setIsLifetime] = useState(false);
   const [customerEmail, setCustomerEmail] = useState<string>('');
 
   const verifyPayment = useCallback(async (sessionId: string) => {
@@ -29,14 +30,25 @@ function SuccessPageContent() {
           setPaymentStatus('success');
           setIsSubscription(data.isSubscription);
           setCustomerEmail(data.customerEmail || '');
-          
+
+          // Check if this is a lifetime purchase
+          const productType = data.productType || '';
+          const isLifetimePurchase = productType === 'lifetime';
+          setIsLifetime(isLifetimePurchase);
+
           // Track successful purchase conversion with comprehensive analytics
-          const paymentType = data.isSubscription ? 'subscription' : 'single';
-          const value = data.isSubscription ? 9.99 : 4.99;
-          
+          const paymentType = isLifetimePurchase ? 'lifetime' : data.isSubscription ? 'subscription' : 'single';
+          const value = isLifetimePurchase ? 29.99 : data.isSubscription ? 9.99 : 4.99;
+
           trackPayment.checkoutComplete(paymentType, value, sessionId);
-          
-          if (data.isSubscription) {
+
+          if (isLifetimePurchase) {
+            // For lifetime, store permanent access flag
+            localStorage.setItem('lifetime_access', 'true');
+            localStorage.setItem('lifetime_email', data.customerEmail);
+            localStorage.setItem('pro_subscription_email', data.customerEmail);
+            trackConversion.proAnalysis(29.99);
+          } else if (data.isSubscription) {
             // For subscriptions, store the customer email for unlimited access
             localStorage.setItem('pro_subscription_email', data.customerEmail);
             localStorage.setItem('pro_subscription_info', JSON.stringify(data.subscriptionInfo));
@@ -136,26 +148,31 @@ function SuccessPageContent() {
         </div>
         
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          {isSubscription ? 'Welcome to Pro Subscription!' : 'Payment Successful!'}
+          {isLifetime ? 'Welcome to Lifetime Access!' : isSubscription ? 'Welcome to Pro+ Subscription!' : 'Payment Successful!'}
         </h1>
-        
+
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          {isSubscription ? (
+          {isLifetime ? (
             <>
-              You now have <strong>unlimited access</strong> to QuoteEvaluator Pro! 
+              You now have <strong>lifetime unlimited access</strong> to QuoteEvaluator!
+              Analyze as many quotes as you want, forever. No monthly fees.
+            </>
+          ) : isSubscription ? (
+            <>
+              You now have <strong>unlimited access</strong> to QuoteEvaluator Pro+!
               Analyze as many quotes as you want with all premium features.
             </>
           ) : (
             <>
-              Welcome to QuoteEvaluator Pro! You now have access to advanced analysis features 
+              Welcome to QuoteEvaluator Pro! You now have access to advanced analysis features
               for this quote including red flags, cost comparisons, and smart questions.
             </>
           )}
         </p>
-        
+
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
           <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-            {isSubscription ? 'Subscription Includes:' : 'What\'s Included:'}
+            {isLifetime ? 'Lifetime Access Includes:' : isSubscription ? 'Pro+ Includes:' : 'What\'s Included:'}
           </h3>
           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
             <li>✅ Red flag detection</li>
@@ -163,11 +180,15 @@ function SuccessPageContent() {
             <li>✅ Smart questions to ask</li>
             <li>✅ Quote health score</li>
             <li>✅ Detailed analysis report</li>
-            {isSubscription && <li>✅ <strong>Unlimited quotes</strong></li>}
+            {(isSubscription || isLifetime) && <li>✅ <strong>Unlimited quotes</strong></li>}
+            {(isSubscription || isLifetime) && <li>�� Quote comparisons</li>}
+            {(isSubscription || isLifetime) && <li>✅ Downloadable PDF reports</li>}
+            {isLifetime && <li>✅ <strong>No monthly fees — forever!</strong></li>}
+            {isSubscription && <li>✅ Priority support</li>}
           </ul>
         </div>
 
-        {isSubscription && customerEmail && (
+        {(isSubscription || isLifetime) && customerEmail && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 mb-6">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
               📧 Your subscription is linked to: <strong>{customerEmail}</strong>
@@ -185,7 +206,7 @@ function SuccessPageContent() {
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
           >
             <span>
-              {isSubscription ? 'Start Analyzing (Unlimited)' : 'View Your Pro Analysis'}
+              {(isSubscription || isLifetime) ? 'Start Analyzing (Unlimited)' : 'View Your Pro Analysis'}
             </span>
             <ArrowRight className="h-4 w-4" />
           </button>
@@ -194,7 +215,7 @@ function SuccessPageContent() {
             onClick={goToHome}
             className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
-            {isSubscription ? 'Analyze Another Quote' : 'Return Home'}
+            {(isSubscription || isLifetime) ? 'Analyze Another Quote' : 'Return Home'}
           </button>
         </div>
       </div>

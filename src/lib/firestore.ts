@@ -99,7 +99,7 @@ export interface SavedQuote {
   quoteData: {
     projectType: string;
     quoteText: string;
-    analysisType: "free" | "pro" | "subscription";
+    analysisType: "free" | "pro" | "subscription" | "lifetime";
   };
   analysisResult: {
     plainEnglishBreakdown: string[];

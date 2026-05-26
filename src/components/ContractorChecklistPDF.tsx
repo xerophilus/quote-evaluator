@@ -172,14 +172,14 @@ export default function ContractorChecklistPDF() {
             <span>✓ Negotiation tips</span>
           </div>
           <p className="mt-4 text-sm opacity-90">
-            QuoteEvaluator.com - Used by 10,000+ homeowners
+            QuoteEvaluator.com - Trusted by thousands of homeowners
           </p>
         </div>
       </div>
 
       {/* Footer */}
       <div className="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
-        <p>© 2024 QuoteEvaluator.com - This checklist is for educational purposes.</p>
+        <p>© 2025 QuoteEvaluator.com - This checklist is for educational purposes.</p>
         <p>Always consult with legal professionals for specific situations.</p>
       </div>
     </div>

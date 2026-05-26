@@ -24,7 +24,7 @@ interface ParsedFile {
 interface QuoteData {
   projectType: string;
   quoteText: string;
-  analysisType: "free" | "pro" | "subscription";
+  analysisType: "free" | "pro" | "subscription" | "lifetime";
   uploadedFile?: File;
   parsedFile?: ParsedFile;
 }
@@ -75,7 +75,7 @@ export default function ProjectLandingPage({ project }: ProjectLandingPageProps)
   const [freeUsageCount, setFreeUsageCount] = useState(0);
   const [hasUsedFreeQuote, setHasUsedFreeQuote] = useState(false);
   const [showEmailSignup, setShowEmailSignup] = useState(false);
-  const [pendingAnalysisType, setPendingAnalysisType] = useState<"free" | "pro" | "subscription" | null>(null);
+  const [pendingAnalysisType, setPendingAnalysisType] = useState<"free" | "pro" | "subscription" | "lifetime" | null>(null);
 
   // Scroll to analysis form for sticky header CTA
   const scrollToAnalysisForm = () => {
@@ -399,7 +399,7 @@ export default function ProjectLandingPage({ project }: ProjectLandingPageProps)
               className="flex items-center space-x-2"
             >
               <Users className="h-4 w-4 text-blue-500" />
-              <span>10,000+ Quotes Analyzed</span>
+              <span>1,000+ Quotes Analyzed</span>
             </motion.div>
           </motion.div>
 

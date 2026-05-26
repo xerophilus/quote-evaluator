@@ -362,7 +362,7 @@ export function getFinalDiscountEmail(data: EmailData): EmailTemplate {
             <!-- Social Proof -->
             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
                 <p style="color: #059669; margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">
-                    Join 10,000+ protected homeowners
+                    Join thousands of protected homeowners
                 </p>
                 <p style="color: #047857; margin: 0; font-size: 14px;">
                     Average savings: $3,200 per project
@@ -436,7 +436,7 @@ QUICK REMINDER: WHAT YOU GET
 ✓ Fair price assessment
 ✓ Professional analysis report
 
-JOIN 10,000+ PROTECTED HOMEOWNERS
+JOIN THOUSANDS OF PROTECTED HOMEOWNERS
 Average savings: $3,200 per project
 
 Claim 20% OFF Before Midnight: ${baseUrl}/?discount=${discountCode}

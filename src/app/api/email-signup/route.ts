@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { logAnalyticsEvent } from '@/lib/analytics-events';
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -82,6 +83,12 @@ export async function POST(request: NextRequest) {
     };
     
     emailSubscribers.set(email, subscriberData);
+
+    await logAnalyticsEvent({
+      type: 'email_signup',
+      email,
+      metadata: { source, leadMagnet: leadMagnet || 'contractor_checklist' },
+    });
 
     // Trigger the first email in the automated sequence
     await triggerWelcomeEmail(email, source);

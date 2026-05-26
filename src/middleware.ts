@@ -100,12 +100,12 @@ export async function middleware(request: NextRequest) {
   response.headers.set(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com https://apis.google.com https://www.gstatic.com; " +
     "style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: https: blob:; " +
     "font-src 'self' data:; " +
-    "connect-src 'self' https://api.openai.com https://api.stripe.com https://checkout.stripe.com https://*.firebase.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firestore.googleapis.com https://www.googleapis.com https://securetoken.googleapis.com; " +
-    "frame-src 'self' https://checkout.stripe.com https://js.stripe.com; " +
+    "connect-src 'self' https://api.openai.com https://api.stripe.com https://checkout.stripe.com https://*.firebase.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://firestore.googleapis.com https://www.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://accounts.google.com; " +
+    "frame-src 'self' https://checkout.stripe.com https://js.stripe.com https://accounts.google.com https://*.firebaseapp.com; " +
     "object-src 'none'; " +
     "base-uri 'self'; " +
     "form-action 'self'; " +

@@ -260,7 +260,7 @@ export default function EmailSignupModal({
               <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             ))}
           </div>
-          <span>4.9/5 from 2,847 users</span>
+          <span>4.9/5 from 500+ users</span>
         </motion.div>
 
         {/* Form */}
@@ -308,7 +308,7 @@ export default function EmailSignupModal({
               transition={{ delay: 0.8 }}
               className="text-xs text-gray-500 dark:text-gray-400 mt-4"
             >
-              🔒 100% secure. No spam. Unsubscribe anytime. Trusted by 10,000+ homeowners.
+              🔒 100% secure. No spam. Unsubscribe anytime. Trusted by thousands of homeowners.
             </motion.p>
           </>
         )}

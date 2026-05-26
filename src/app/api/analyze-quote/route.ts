@@ -22,10 +22,13 @@ interface AnalysisResult {
   };
 }
 
+// Model configurable via environment variable
+const ANALYSIS_MODEL = process.env.ANALYSIS_MODEL || 'claude-sonnet-4-20250514';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate input
     let validatedData;
     try {
@@ -39,25 +42,24 @@ export async function POST(request: NextRequest) {
       }
       throw error;
     }
-    
+
     // Sanitize the quote text
     const quoteText = sanitizeText(validatedData.quoteText);
     const { analysisType } = validatedData;
 
-    // Check if OpenAI API key is configured
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey || apiKey === 'your_openai_api_key_here') {
-      console.warn('OpenAI API key not configured, using mock data');
+    // Check if Anthropic API key is configured
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === 'your_anthropic_api_key_here') {
+      console.warn('Anthropic API key not configured, using mock data');
       return NextResponse.json(getMockResult(analysisType));
     }
 
     try {
-      // Always generate full analysis, let frontend handle free/pro display
-      const result = await analyzeWithOpenAI(quoteText);
+      const result = await analyzeWithClaude(quoteText, analysisType);
       return NextResponse.json(result);
-    } catch (openAIError) {
-      console.error('OpenAI API error:', openAIError);
-      // Fallback to mock data if OpenAI fails - always full analysis
+    } catch (claudeError) {
+      console.error('Claude API error:', claudeError);
+      // Fallback to mock data if Claude fails - always full analysis
       return NextResponse.json(getMockResult('pro'));
     }
 
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Mock data for fallback or development
-function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush'): AnalysisResult {
+function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush' | 'lifetime'): AnalysisResult {
   return {
     plainEnglishBreakdown: [
       "Kitchen cabinets installation: $8,500 - This covers the cost of installing new kitchen cabinets, including materials and labor.",
@@ -83,7 +85,7 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush'): 
       "Permits and inspections: $800 - This covers all necessary building permits and city inspection fees.",
       "Contingency fund: $2,000 - This is a 10% buffer for unexpected issues or changes during the project."
     ],
-    redFlags: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush') ? [
+    redFlags: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? [
       "🚨 Vague 'labor and project management' fee - $4,500 is 25% of total project cost, unusually high for project management alone",
       "🚨 No breakdown of cabinet materials or brand specifications - you could be getting low-quality materials for premium prices",
       "🚨 Missing timeline for project completion - no start date or estimated duration provided",
@@ -92,7 +94,7 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush'): 
       "🚨 No mention of subcontractor licensing or insurance verification",
       "🚨 Missing details on appliance hookups and testing procedures"
     ] : undefined,
-    costComparison: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush') ? [
+    costComparison: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? [
       "📊 Kitchen cabinets: Your quote ($8,500) vs National average ($7,200) - 18% higher than average",
       "📊 Granite countertops: Your quote ($3,200) vs National average ($3,500) - 9% lower than average (good value!)",
       "📊 Plumbing work: Your quote ($1,800) vs National average ($1,600) - 13% higher than average",
@@ -101,7 +103,7 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush'): 
       "📊 Demolition: Your quote ($1,200) vs National average ($1,000) - 20% higher than average",
       "📊 Permits: Your quote ($800) vs National average ($600) - 33% higher than average"
     ] : undefined,
-    smartQuestions: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush') ? [
+    smartQuestions: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? [
       "🔍 What brand and quality of cabinets are included in the $8,500 price? Can you provide specific model numbers?",
       "🔍 Can you break down the $4,500 project management fee? What specific services does this include?",
       "🔍 What is the estimated timeline for completion? Can you provide a detailed schedule?",
@@ -113,14 +115,14 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush'): 
       "🔍 What permits are required and who is responsible for obtaining them?",
       "🔍 How do you handle change orders and additional costs?"
     ] : undefined,
-    healthScore: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush') ? {
+    healthScore: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? {
       grade: "C+",
       color: "orange",
       description: "Some concerns identified - review carefully before proceeding",
       percentage: 72
     } : undefined,
-    majorConcern: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush') ? "Project management fee is 61% higher than average - this could indicate overcharging or poor project planning." : undefined,
-    extractedInfo: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush') ? {
+    majorConcern: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? "Project management fee is 61% higher than average - this could indicate overcharging or poor project planning." : undefined,
+    extractedInfo: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? {
       totalPrice: 24100,
       contractorName: "Mike Johnson",
       contractorCompany: "Premier Kitchen Solutions",
@@ -134,69 +136,72 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush'): 
   };
 }
 
-// OpenAI integration
-async function analyzeWithOpenAI(quoteText: string): Promise<AnalysisResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  
+// Claude (Anthropic) integration
+async function analyzeWithClaude(quoteText: string, analysisType: string): Promise<AnalysisResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
   if (!apiKey) {
-    throw new Error('OpenAI API key not configured');
+    throw new Error('Anthropic API key not configured');
   }
 
-  // Always use the better model for consistent analysis quality
-  const model = 'gpt-4o';
-  
-  // Always generate full Pro analysis for better UX and conversion
-  const prompt = `You are an expert contractor and construction analyst with expertise across all areas of home renovation and construction. Analyze this contractor quote and break it down in plain English, clearly explaining what's included in each line item.
+  const isFree = analysisType === 'free';
 
-First, identify what type of project this is (kitchen remodel, bathroom renovation, roofing, HVAC, etc.) based on the line items and scope.
+  const systemPrompt = `You are an expert contractor quote analyst with deep knowledge of construction costs, common contractor pricing tactics, and home improvement industry standards across all trades (kitchen, bathroom, roofing, HVAC, electrical, plumbing, flooring, decks, additions, and more).
 
-For the plain English breakdown, group related items into 4-7 main categories. Each explanation should be clear and factual:
-- What specific items/services are included
-- Quantities, materials, or scope mentioned
-- Keep it straightforward and factual
+Your job is to analyze contractor quotes and help homeowners understand exactly what they're paying for, whether the pricing is fair, and how to protect themselves.
 
-Then provide professional analysis for pro features.
+Always return your analysis as a valid JSON object with these exact fields:
 
-Format your response as a JSON object with these exact fields:
-- plainEnglishBreakdown: array of 4-7 clear strings (use **bold** for category names and costs, explain what's actually included)
-- redFlags: array of strings (potential issues, start each with 🚨, limit to 3-5 most important)
-- costComparison: array of strings (comparisons to national averages, start each with 📊, limit to 3-5 most important)
-- smartQuestions: array of strings (questions to ask the contractor, start each with 🔍, limit to 3-5 most important)
-- healthScore: object with { grade: string, color: string, description: string, percentage: number }
-- majorConcern: string (single biggest concern)
-- extractedInfo: object with { totalPrice: number (total quote amount, null if not found), contractorName: string (person's name, null if not found), contractorCompany: string (business name, null if not found), projectType: string (e.g., "Kitchen Remodel", "Bathroom Renovation") }
+- plainEnglishBreakdown: array of 4-7 strings. Group related line items into categories. Use **bold** for category names and dollar amounts. Explain in plain English what each category covers — what work is being done, what materials are included, and what the homeowner is actually paying for. Be specific and factual.
+- extractedInfo: object with { totalPrice: number or null, contractorName: string or null, contractorCompany: string or null, projectType: string (e.g. "Kitchen Remodel", "Bathroom Renovation", "Roof Replacement") }
+${isFree ? '' : `- redFlags: array of 3-5 strings. Each starts with 🚨. Identify vague line items, missing details, unusually high markups, missing warranty/timeline/permit info, and other warning signs.
+- costComparison: array of 3-5 strings. Each starts with 📊. Compare key line items to national/regional averages. Show "Your quote ($X) vs Average ($Y) - Z% higher/lower".
+- smartQuestions: array of 3-5 strings. Each starts with 🔍. Specific questions the homeowner should ask the contractor to clarify scope, protect themselves, or negotiate.
+- healthScore: object with { grade: string (letter grade like "B+", "C-", "A"), color: string ("green"/"orange"/"red"), description: string (one sentence summary), percentage: number (0-100) }
+- majorConcern: string. The single most important issue the homeowner should address before signing.`}
 
-Quote: ${quoteText}`;
+${isFree ? 'Only include plainEnglishBreakdown and extractedInfo fields. Do not include redFlags, costComparison, smartQuestions, healthScore, or majorConcern.' : 'Include ALL fields listed above for a complete professional analysis.'}
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+Respond with ONLY the JSON object, no other text.`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model,
-      messages: [{ 
-        role: 'user', 
-        content: prompt 
+      model: ANALYSIS_MODEL,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{
+        role: 'user',
+        content: `Analyze this contractor quote:\n\n${quoteText}`
       }],
       temperature: 0.7,
-      response_format: { type: "json_object" }
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    const errorBody = await response.text();
+    throw new Error(`Anthropic API error: ${response.status} ${errorBody}`);
   }
 
   const data = await response.json();
-  const content = data.choices[0].message.content;
-  
+  const content = data.content[0].text;
+
   try {
     const parsed = JSON.parse(content);
     return parsed as AnalysisResult;
   } catch (error) {
-    console.error('Failed to parse OpenAI response:', content, error);
-    throw new Error('Invalid response format from OpenAI');
+    // Try to extract JSON from the response if it has surrounding text
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return parsed as AnalysisResult;
+    }
+    console.error('Failed to parse Claude response:', content, error);
+    throw new Error('Invalid response format from Claude');
   }
 } 

@@ -7,6 +7,11 @@ service cloud.firestore {
       allow write: if true;
     }
     
+    // Server-only analytics events (written via Firebase Admin SDK)
+    match /analyticsEvents/{document} {
+      allow read, write: if false;
+    }
+
     // Allow test collection for connection testing
     match /test/{document} {
       allow read: if true;

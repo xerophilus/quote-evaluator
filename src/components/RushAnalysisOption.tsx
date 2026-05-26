@@ -8,7 +8,7 @@ import { trackClick, trackRevenue } from '@/lib/analytics';
 interface RushAnalysisOptionProps {
   isSelected: boolean;
   onToggle: (selected: boolean) => void;
-  analysisType: 'free' | 'pro' | 'subscription';
+  analysisType: 'free' | 'pro' | 'subscription' | 'lifetime';
 }
 
 export default function RushAnalysisOption({ 

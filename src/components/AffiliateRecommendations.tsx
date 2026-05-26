@@ -21,7 +21,7 @@ interface AffiliateLink {
 
 interface AffiliateRecommendationsProps {
   projectType: string;
-  analysisType: 'free' | 'pro' | 'subscription';
+  analysisType: 'free' | 'pro' | 'subscription' | 'lifetime';
   userLocation?: string;
 }
 

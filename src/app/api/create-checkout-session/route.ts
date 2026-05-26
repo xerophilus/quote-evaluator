@@ -9,7 +9,8 @@ const PRODUCT_PRICE_IDS = {
   subscription: 'price_1RoyCWGzTvAw50xvdBQrWrJw', // Pro Subscription $9.99/month - Production Price ID
   rush: 'price_rush_analysis_9_99', // Rush Analysis $9.99 - Placeholder, need actual Stripe ID
   repeat: 'price_repeat_analysis_4_99', // Repeat Analysis $4.99 - Placeholder, need actual Stripe ID
-  proplus: 'price_1RoyCWGzTvAw50xvdBQrWrJw', // Pro+ same as subscription for now
+  proplus: 'price_1TLPIRGzTvAw50xvH8KeUNkZ', // Pro+ $9.99/month subscription
+  lifetime: 'price_1TLPIiGzTvAw50xvaIrSnf1J', // Lifetime Access $29.99 one-time
 };
 
 export async function POST(request: NextRequest) {
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
     let checkoutMode = mode;
     if (productType === 'subscription' || productType === 'proplus') {
       checkoutMode = 'subscription';
+    } else if (productType === 'lifetime') {
+      checkoutMode = 'payment';
     }
 
     // Create checkout session

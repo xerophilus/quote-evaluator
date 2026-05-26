@@ -3,14 +3,14 @@ import { z } from 'zod';
 // Validation schemas for API routes
 export const analyzeQuoteSchema = z.object({
   quoteText: z.string().min(10).max(50000),
-  analysisType: z.enum(['free', 'pro', 'subscription', 'rush'])
+  analysisType: z.enum(['free', 'pro', 'subscription', 'rush', 'lifetime'])
 });
 
 export const createCheckoutSchema = z.object({
   priceId: z.string().optional(),
   mode: z.enum(['payment', 'subscription']).default('payment'),
   quoteId: z.string().optional(),
-  productType: z.enum(['single', 'subscription', 'rush', 'repeat', 'proplus']).optional()
+  productType: z.enum(['single', 'subscription', 'rush', 'repeat', 'proplus', 'lifetime']).optional()
 });
 
 export const verifyPaymentSchema = z.object({
@@ -23,7 +23,7 @@ export const saveQuoteSchema = z.object({
   quoteData: z.object({
     projectType: z.string().min(1).max(100),
     quoteText: z.string().min(10).max(50000),
-    analysisType: z.enum(['free', 'pro', 'subscription', 'rush'])
+    analysisType: z.enum(['free', 'pro', 'subscription', 'rush', 'lifetime'])
   }),
   analysisResult: z.object({
     plainEnglishBreakdown: z.array(z.string()),
