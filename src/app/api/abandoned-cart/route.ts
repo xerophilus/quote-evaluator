@@ -9,7 +9,7 @@ const abandonedCartSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   quoteId: z.string(),
-  analysisType: z.enum(['pro', 'subscription', 'rush', 'repeat']),
+  analysisType: z.enum(['pro', 'subscription', 'repeat']),
   totalPrice: z.number(),
   formData: z.object({
     firstName: z.string().optional(),

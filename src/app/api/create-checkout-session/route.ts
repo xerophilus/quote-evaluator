@@ -7,7 +7,6 @@ import { z } from 'zod';
 const PRODUCT_PRICE_IDS = {
   single: 'price_1RoyC2GzTvAw50xvEBJva56n', // Single Quote $4.99 - Production Price ID
   subscription: 'price_1RoyCWGzTvAw50xvdBQrWrJw', // Pro Subscription $9.99/month - Production Price ID
-  rush: 'price_rush_analysis_9_99', // Rush Analysis $9.99 - Placeholder, need actual Stripe ID
   repeat: 'price_repeat_analysis_4_99', // Repeat Analysis $4.99 - Placeholder, need actual Stripe ID
   proplus: 'price_1TLPIRGzTvAw50xvH8KeUNkZ', // Pro+ $9.99/month subscription
   lifetime: 'price_1TLPIiGzTvAw50xvaIrSnf1J', // Lifetime Access $29.99 one-time

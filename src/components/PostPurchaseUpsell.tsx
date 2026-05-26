@@ -12,7 +12,7 @@ import { hotjar } from '@/components/HotjarProvider';
 interface PostPurchaseUpsellProps {
   isOpen: boolean;
   onClose: () => void;
-  purchasedType: 'pro' | 'subscription' | 'rush';
+  purchasedType: 'pro' | 'subscription';
   purchaseAmount: number;
   customerEmail: string;
   onUpsellPurchase: (upsellType: 'additional_quote' | 'pro_plus', price: number) => void;

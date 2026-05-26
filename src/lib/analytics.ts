@@ -402,18 +402,6 @@ export const trackRevenue = {
     });
   },
   
-  // Rush Analysis Events
-  rushAnalysisSelected: (baseAnalysisType: string) => {
-    trackEvent('rush_analysis_selected', 'Revenue', baseAnalysisType, 9.99, {
-      upgrade_type: 'rush_premium',
-      base_price: baseAnalysisType === 'pro' ? 4.99 : 0
-    });
-  },
-  
-  rushAnalysisDeselected: (baseAnalysisType: string) => {
-    trackEvent('rush_analysis_deselected', 'Revenue', baseAnalysisType);
-  },
-  
   // Repeat Purchase Events
   repeatPurchaseShown: (analysisType: string, location: string) => {
     trackEvent('repeat_purchase_shown', 'Revenue', analysisType, undefined, {

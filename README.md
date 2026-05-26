@@ -1,130 +1,135 @@
-🧠 Project: QuoteEvaluator.com – MVP Build Guide for Cursor
-📌 Summary:
-An AI-powered tool that lets users upload or paste contractor quotes (starting with kitchen and bathroom remodels), and get:
+# QuoteEvaluator
 
-A plain English explanation of the quote (free)
+AI-powered contractor quote analysis for homeowners. Upload or paste a quote and get a plain-English breakdown, red flags, cost comparisons, and questions to ask before you sign.
 
-A smart breakdown with red flags and cost comparisons (paid)
+**Live site:** [quoteevaluator.com](https://quoteevaluator.com)
 
-⚙️ Tech Stack:
-Frontend: Next.js + TailwindCSS
+## What it does
 
-AI Models: OpenAI’s GPT-4o Mini (free tier) and GPT-4o (paid)
+- **Free tier** — Plain-language rewrite of line items
+- **Pro ($4.99)** — Full analysis with red flags, cost benchmarks, health score, and negotiation questions
+- **Pro+ ($9.99/mo)** — Unlimited analyses and saved quotes
+- **Lifetime ($29.99)** — One-time access to Pro features
 
-Backend: Firebase
+Supports PDF, DOC, DOCX, and pasted text. Works for kitchen remodels, bathrooms, roofing, and general contractor quotes.
 
-Deployment: Vercel
+## Tech stack
 
-🧩 Feature Breakdown
-🔹 Free Tier (o4-mini)
-User Flow:
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 15 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS |
+| AI | Anthropic Claude (`claude-sonnet-4-20250514`) |
+| Payments | Stripe Checkout |
+| Database | Firebase Firestore |
+| Email | Mailchimp |
+| Analytics | Google Analytics / Ads, Hotjar, Vercel Analytics |
+| Hosting | Vercel |
 
-Upload or paste quote
+## Getting started
 
-Select project type (Kitchen / Bathroom)
+### Prerequisites
 
-Get a plain English rewrite of each line item
+- Node.js 20+
+- Accounts for [Anthropic](https://console.anthropic.com), [Stripe](https://dashboard.stripe.com), and [Firebase](https://console.firebase.google.com) (optional but recommended)
 
-Prompt Example:
+### Install
 
-You are a home renovation assistant. A user submitted a quote for a [project type]. Rewrite each line item in plain English. Do not provide analysis or judgment.
-🔹 Paid Tier (GPT-4o)
-
-User Flow:
-
-Submit quote + project type
-
-Receive:
-
-Plain-language breakdown
-
-Cost comparison vs U.S. averages
-
-Red flags (e.g. vague fees, duplicate labor)
-
-Suggested questions to ask contractor
-
-Prompt Example:
-You are an expert contractor quote analyst. Break down this [project type] quote in plain English. Then compare line item prices to U.S. national averages. Highlight any potential overcharges or vague charges. Format your response as:
-1. Plain English Breakdown
-2. Red Flags
-3. Cost Comparison
-4. Smart Questions to Ask
-
-
-💵 Monetization Plan
-Tier	Price	Features
-Free	$0	1 plain-language rewrite (no cost comparison)
-Pro	$9.99/quote	Full analysis, red flags, comparison
-Pro+	$19.99/month	Unlimited quotes, quote comparisons, downloadable reports
-
-🖥️ Pages to Build
-/ – Main Page
-Hero, explanation, call-to-action
-
-Step 1: Select project type
-
-Step 2: Upload or paste quote
-
-Step 3: Choose free or Pro analysis
-
-Results area (placeholder for now)
-
-## 🛠️ Setup Instructions
-
-### Environment Variables
-Create a `.env.local` file in the root directory with:
-```
-# OpenAI API Key (required for real AI analysis)
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Stripe Configuration (required for payments)
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
-STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
-
-# App URL (required for Stripe redirects)
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-### Getting API Keys
-1. **OpenAI API Key**: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
-2. **Stripe Keys**: Get from [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys)
-   - Use test keys for development (they start with `sk_test_` and `pk_test_`)
-   - Switch to live keys for production
-
-### Installation & Development
 ```bash
+git clone https://github.com/xerophilus/quote-evaluator.git
+cd quote-evaluator
 npm install
+```
+
+### Environment variables
+
+Create `.env.local` in the project root:
+
+```bash
+# AI (required)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Stripe (required)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Firebase (optional — enables saved quotes in Firestore)
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+
+# Mailchimp (optional — email signup & checklist delivery)
+MAILCHIMP_API_KEY=
+MAILCHIMP_AUDIENCE_ID=
+MAILCHIMP_SERVER_PREFIX=
+MAILCHIMP_FROM_EMAIL=hello@quoteevaluator.com
+
+# Admin dashboard (optional)
+ADMIN_SESSION_SECRET=
+ADMIN_EMAILS=benji.pitts@gmail.com
+FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+```
+
+### Run locally
+
+```bash
 npm run dev
 ```
 
-## 🪝 Development Progress
+Open [http://localhost:3000](http://localhost:3000).
 
-### ✅ Completed
-- ✅ Set up app/page.tsx with Tailwind + three-step UI
-- ✅ Universal quote analysis (removed project type step)
-- ✅ File parsing for DOC, DOCX, TXT, PDF (server-side)
-- ✅ API structure with proper TypeScript interfaces
-- ✅ Modern responsive UI with loading states
-- ✅ OpenAI API integration (GPT-4o with fallback to mock data)
-- ✅ Stripe payment integration with checkout flow
-- ✅ Payment verification and Pro feature unlocking
-- ✅ Markdown formatting for analysis results
-- ✅ Error boundaries and enhanced error handling
+### Build
 
-### 🔄 In Progress
-- 🔄 Testing and deployment optimization
+```bash
+npm run build
+npm start
+```
 
-### 📋 Remaining Tasks
-- ⏳ Firebase setup for user management (optional)
-- ⏳ Production deployment preparation
-- ⏳ Analytics and monitoring setup
+## Project structure
 
-✅ Phase 2 Ideas (Not MVP)
-OCR support for scanned PDFs
+```
+src/
+├── app/                  # Pages and API routes
+│   ├── api/              # analyze-quote, checkout, payments, admin, etc.
+│   ├── admin/            # Admin dashboard (Google auth)
+│   ├── dashboard/        # User quote dashboard
+│   └── guides/           # SEO cost guides
+├── components/           # UI components
+└── lib/                  # Firebase, analytics, validation, Stripe helpers
+```
 
-Side-by-side quote comparisons
+## Key routes
 
-Contractor rating/flagging system
+| Route | Description |
+|-------|-------------|
+| `/` | Main quote upload and analysis flow |
+| `/dashboard` | Saved quotes for subscribers |
+| `/admin` | Revenue and usage metrics (admin only) |
+| `/guides` | SEO content hub |
+| `/success` | Post-checkout confirmation |
 
-Affiliate monetization (Home Depot, Thumbtack, etc.)
+## Deployment
+
+Deployed on Vercel. Set all environment variables in the Vercel project settings, then:
+
+```bash
+git push origin main
+```
+
+Use **live** Stripe keys in production. Deploy Firestore rules with:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+## Admin access
+
+The admin dashboard at `/admin` uses Google sign-in. Only emails listed in `ADMIN_EMAILS` can access it. Enable Google as a sign-in provider in the Firebase console.
+
+## License
+
+Private — all rights reserved.

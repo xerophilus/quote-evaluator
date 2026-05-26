@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Mock data for fallback or development
-function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush' | 'lifetime'): AnalysisResult {
+function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'lifetime'): AnalysisResult {
   return {
     plainEnglishBreakdown: [
       "Kitchen cabinets installation: $8,500 - This covers the cost of installing new kitchen cabinets, including materials and labor.",
@@ -85,7 +85,7 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush' | 
       "Permits and inspections: $800 - This covers all necessary building permits and city inspection fees.",
       "Contingency fund: $2,000 - This is a 10% buffer for unexpected issues or changes during the project."
     ],
-    redFlags: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? [
+    redFlags: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'lifetime') ? [
       "🚨 Vague 'labor and project management' fee - $4,500 is 25% of total project cost, unusually high for project management alone",
       "🚨 No breakdown of cabinet materials or brand specifications - you could be getting low-quality materials for premium prices",
       "🚨 Missing timeline for project completion - no start date or estimated duration provided",
@@ -94,7 +94,7 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush' | 
       "🚨 No mention of subcontractor licensing or insurance verification",
       "🚨 Missing details on appliance hookups and testing procedures"
     ] : undefined,
-    costComparison: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? [
+    costComparison: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'lifetime') ? [
       "📊 Kitchen cabinets: Your quote ($8,500) vs National average ($7,200) - 18% higher than average",
       "📊 Granite countertops: Your quote ($3,200) vs National average ($3,500) - 9% lower than average (good value!)",
       "📊 Plumbing work: Your quote ($1,800) vs National average ($1,600) - 13% higher than average",
@@ -103,7 +103,7 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush' | 
       "📊 Demolition: Your quote ($1,200) vs National average ($1,000) - 20% higher than average",
       "📊 Permits: Your quote ($800) vs National average ($600) - 33% higher than average"
     ] : undefined,
-    smartQuestions: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? [
+    smartQuestions: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'lifetime') ? [
       "🔍 What brand and quality of cabinets are included in the $8,500 price? Can you provide specific model numbers?",
       "🔍 Can you break down the $4,500 project management fee? What specific services does this include?",
       "🔍 What is the estimated timeline for completion? Can you provide a detailed schedule?",
@@ -115,14 +115,14 @@ function getMockResult(analysisType: 'free' | 'pro' | 'subscription' | 'rush' | 
       "🔍 What permits are required and who is responsible for obtaining them?",
       "🔍 How do you handle change orders and additional costs?"
     ] : undefined,
-    healthScore: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? {
+    healthScore: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'lifetime') ? {
       grade: "C+",
       color: "orange",
       description: "Some concerns identified - review carefully before proceeding",
       percentage: 72
     } : undefined,
-    majorConcern: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? "Project management fee is 61% higher than average - this could indicate overcharging or poor project planning." : undefined,
-    extractedInfo: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'rush' || analysisType === 'lifetime') ? {
+    majorConcern: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'lifetime') ? "Project management fee is 61% higher than average - this could indicate overcharging or poor project planning." : undefined,
+    extractedInfo: (analysisType === 'pro' || analysisType === 'subscription' || analysisType === 'lifetime') ? {
       totalPrice: 24100,
       contractorName: "Mike Johnson",
       contractorCompany: "Premier Kitchen Solutions",

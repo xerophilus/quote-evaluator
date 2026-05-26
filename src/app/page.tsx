@@ -11,7 +11,6 @@ import StickyHeader from "@/components/StickyHeader";
 import EmailCaptureForm from "@/components/EmailCaptureForm";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import UpsellModal from "@/components/UpsellModal";
-import RushAnalysisOption from "@/components/RushAnalysisOption";
 import ShareAnalysis from "@/components/ShareAnalysis";
 import RepeatPurchase from "@/components/RepeatPurchase";
 import { trackQuoteAnalysis, trackPayment, trackEngagement, trackClick, trackError, trackConversion, trackFeature, trackRevenue } from "@/lib/analytics";
@@ -84,7 +83,6 @@ export default function Home() {
   
   // New revenue features state
   const [showUpsellModal, setShowUpsellModal] = useState(false);
-  const [hasRushAnalysis, setHasRushAnalysis] = useState(false);
   const [currentQuoteId, setCurrentQuoteId] = useState<string | null>(null);
 
   // Scroll to analysis form for sticky header CTA
@@ -869,10 +867,6 @@ export default function Home() {
     await handleUpsellUpgrade('repeat');
   };
 
-  const handleRushAnalysisToggle = (selected: boolean) => {
-    setHasRushAnalysis(selected);
-  };
-
   const showUpsellAfterAnalysis = () => {
     // Show upsell modal after analysis completion for free/pro users (not lifetime/subscription)
     if (analysisResult && (quoteData.analysisType === 'free' || quoteData.analysisType === 'pro')) {
@@ -1315,13 +1309,6 @@ export default function Home() {
                       onChange={(e) => setQuoteData(prev => ({ ...prev, quoteText: e.target.value }))}
                     />
                   </div>
-
-                  {/* Rush Analysis Option */}
-                  <RushAnalysisOption
-                    isSelected={hasRushAnalysis}
-                    onToggle={handleRushAnalysisToggle}
-                    analysisType={quoteData.analysisType}
-                  />
 
                   <div className="flex justify-between items-center">
 

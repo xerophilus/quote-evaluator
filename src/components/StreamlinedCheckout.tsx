@@ -4,19 +4,18 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Shield, Lock, CreditCard, Clock, CheckCircle, 
-  ArrowLeft, AlertCircle, Star, DollarSign,
-  Smartphone, Zap, RefreshCw
+  ArrowLeft, AlertCircle, Star,
+  Smartphone, RefreshCw
 } from 'lucide-react';
 import { trackPayment, trackError, trackConversion } from '@/lib/analytics';
 import { hotjar } from '@/components/HotjarProvider';
 
 interface StreamlinedCheckoutProps {
-  analysisType: 'pro' | 'subscription' | 'rush' | 'repeat';
+  analysisType: 'pro' | 'subscription' | 'repeat';
   basePrice: number;
   quoteId: string;
   onBack: () => void;
   onSuccess: (sessionId: string) => void;
-  rushAnalysis?: boolean;
   userEmail?: string;
 }
 
@@ -34,7 +33,6 @@ export default function StreamlinedCheckout({
   quoteId,
   onBack,
   onSuccess,
-  rushAnalysis = false,
   userEmail = ''
 }: StreamlinedCheckoutProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('card');
@@ -50,8 +48,7 @@ export default function StreamlinedCheckout({
   });
 
   // Calculate pricing
-  const rushUpcharge = rushAnalysis ? 9.99 : 0;
-  const totalPrice = basePrice + rushUpcharge;
+  const totalPrice = basePrice;
 
   // Payment methods available
   const paymentMethods: PaymentMethod[] = [
@@ -140,7 +137,6 @@ export default function StreamlinedCheckout({
         mode: analysisType === 'subscription' ? 'subscription' : 'payment',
         quoteId,
         customerEmail: formData.email,
-        rushAnalysis,
         metadata: {
           first_name: formData.firstName,
           last_name: formData.lastName,
@@ -148,7 +144,6 @@ export default function StreamlinedCheckout({
           payment_method: selectedPaymentMethod,
           total_price: totalPrice,
           base_price: basePrice,
-          rush_upcharge: rushUpcharge
         }
       };
 
@@ -192,8 +187,6 @@ export default function StreamlinedCheckout({
     switch (analysisType) {
       case 'subscription':
         return { main: '$9.99', period: '/month', description: 'Unlimited quotes' };
-      case 'rush':
-        return { main: `$${totalPrice.toFixed(2)}`, period: 'one-time', description: 'Rush analysis' };
       case 'repeat':
         return { main: '$3.99', period: 'one-time', description: 'Additional quote' };
       default:
@@ -253,22 +246,11 @@ export default function StreamlinedCheckout({
             <div className="flex justify-between items-center">
               <span className="text-gray-600">
                 {analysisType === 'subscription' ? 'Pro+ Monthly Subscription' :
-                 analysisType === 'rush' ? 'Rush Analysis' :
                  analysisType === 'repeat' ? 'Additional Quote Analysis' :
                  'Pro Quote Analysis'}
               </span>
               <span className="font-semibold">${basePrice.toFixed(2)}</span>
             </div>
-            
-            {rushAnalysis && (
-              <div className="flex justify-between items-center text-orange-600">
-                <span className="flex items-center space-x-2">
-                  <Zap className="h-4 w-4" />
-                  <span>Rush Processing</span>
-                </span>
-                <span className="font-semibold">+${rushUpcharge.toFixed(2)}</span>
-              </div>
-            )}
             
             <hr className="border-gray-200" />
             

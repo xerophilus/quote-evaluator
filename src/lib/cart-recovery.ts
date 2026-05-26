@@ -4,7 +4,7 @@ export interface AbandonedCart {
   id: string;
   email: string;
   quoteId: string;
-  analysisType: 'pro' | 'subscription' | 'rush' | 'repeat';
+  analysisType: 'pro' | 'subscription' | 'repeat';
   totalPrice: number;
   formData: {
     firstName?: string;
